@@ -5,7 +5,7 @@ struct ZoneListView: View {
     @Binding var selection: SnapZone.ID?
 
     var body: some View {
-        List(zoneStore.zones, selection: $selection) { zone in
+        List(sortedZones, selection: $selection) { zone in
             HStack(spacing: 8) {
                 Label(zone.name, systemImage: "scope")
                 Spacer()
@@ -56,6 +56,19 @@ struct ZoneListView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
             .background(.bar)
+        }
+    }
+
+    private var sortedZones: [SnapZone] {
+        zoneStore.zones.sorted { lhs, rhs in
+            switch lhs.name.localizedStandardCompare(rhs.name) {
+            case .orderedAscending:
+                return true
+            case .orderedDescending:
+                return false
+            case .orderedSame:
+                return lhs.id.uuidString < rhs.id.uuidString
+            }
         }
     }
 }
