@@ -58,9 +58,13 @@ final class LoginItemManager: ObservableObject {
             requiresApproval = false
             statusUnavailable = false
         case .notFound:
+            // A fresh main-app login item may not have a Background Task
+            // Management record until register() is called. Keep the toggle
+            // actionable so registration can create that record and report
+            // any real signing or authorization error.
             isRegistered = false
             requiresApproval = false
-            statusUnavailable = true
+            statusUnavailable = false
         @unknown default:
             isRegistered = false
             requiresApproval = false
