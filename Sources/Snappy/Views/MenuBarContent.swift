@@ -13,6 +13,8 @@ struct MenuBarContent: View {
 
         Toggle("Snapping", isOn: $snappingEnabled)
 
+        Text("Snappy mode: ⌃⌥E")
+
         if !snapEngine.accessibilityGranted {
             Divider()
             Button("Grant Accessibility") {

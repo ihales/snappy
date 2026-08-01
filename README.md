@@ -21,6 +21,18 @@ resulting window position and size.
 The defaults are Left Half, Maximize, and Right Half. Hotspots are stored in
 `UserDefaults` and can be added, duplicated, edited, or deleted in the app.
 
+## Keyboard mode
+
+Press `Control-Option-E` to capture the currently focused window and open a
+short-lived Snappy mode. Press a hotspot's assigned letter or number to snap
+the window, use an arrow key to move it to the neighboring display while
+keeping Snappy mode open, or press Escape to cancel. The mode also closes after
+three seconds of inactivity.
+
+The default hotspots use `1`, `2`, and `3`. Each key can be changed or cleared
+in the hotspot editor; duplicate assignments are highlighted and will not run
+until the conflict is resolved.
+
 ## Run
 
 ```sh

@@ -20,6 +20,15 @@ enum ScreenCoordinates {
         )
     }
 
+    static func appKitRect(fromAccessibility rect: CGRect) -> CGRect {
+        CGRect(
+            x: rect.minX,
+            y: accessibilityDesktopTop - rect.maxY,
+            width: rect.width,
+            height: rect.height
+        )
+    }
+
     static func screen(containing point: CGPoint) -> NSScreen? {
         if let exact = NSScreen.screens.first(where: { $0.frame.contains(point) }) {
             return exact
@@ -28,6 +37,36 @@ enum ScreenCoordinates {
         return NSScreen.screens.min { lhs, rhs in
             lhs.frame.distance(to: point) < rhs.frame.distance(to: point)
         }
+    }
+
+    static func screen(containingMostOf windowFrame: CGRect) -> NSScreen? {
+        let intersections = NSScreen.screens.map { screen in
+            let intersection = screen.frame.intersection(windowFrame)
+            let area = intersection.isNull ? 0 : intersection.width * intersection.height
+            return (screen: screen, area: area)
+        }
+        if let best = intersections.max(by: { $0.area < $1.area }), best.area > 0 {
+            return best.screen
+        }
+        return screen(containing: CGPoint(x: windowFrame.midX, y: windowFrame.midY))
+    }
+
+    static func neighboringScreen(
+        from source: NSScreen,
+        direction: ScreenDirection
+    ) -> NSScreen? {
+        let screens = NSScreen.screens
+        guard let sourceIndex = screens.firstIndex(where: { $0.frame == source.frame }) else {
+            return nil
+        }
+        guard let index = ScreenLayoutGeometry.neighborIndex(
+            from: sourceIndex,
+            direction: direction,
+            frames: screens.map(\.frame)
+        ) else {
+            return nil
+        }
+        return screens[index]
     }
 }
 

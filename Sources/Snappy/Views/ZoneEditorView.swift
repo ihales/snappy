@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ZoneEditorView: View {
     @Binding var zone: SnapZone
+    let shortcutHasConflict: Bool
 
     private var currentDisplayWidth: Double {
         Double(NSScreen.main?.frame.width ?? 0)
@@ -35,6 +36,25 @@ struct ZoneEditorView: View {
                             .frame(width: 100)
 
                             NumberField(label: "At", value: $zone.activationPosition, suffix: "%")
+                        }
+                    }
+
+                    Divider().gridCellColumns(2)
+
+                    GridRow {
+                        SectionLabel(
+                            title: "Keyboard shortcut",
+                            subtitle: "Press after the global leader shortcut"
+                        )
+                        ShortcutKeyField(value: $zone.shortcutKey)
+                    }
+
+                    if shortcutHasConflict {
+                        GridRow {
+                            Color.clear.frame(width: 230, height: 1)
+                            Label("This key is also assigned to another hotspot.", systemImage: "exclamationmark.triangle.fill")
+                                .font(.caption)
+                                .foregroundStyle(.orange)
                         }
                     }
 
@@ -91,6 +111,40 @@ struct ZoneEditorView: View {
             return "Active on the current \(formattedWidth)-point display"
         }
         return "Inactive on the current \(formattedWidth)-point display"
+    }
+}
+
+private struct ShortcutKeyField: View {
+    @Binding var value: String?
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text("⌃⌥E then")
+                .foregroundStyle(.secondary)
+            TextField("—", text: textBinding)
+                .textFieldStyle(.roundedBorder)
+                .multilineTextAlignment(.center)
+                .font(.body.monospaced().weight(.semibold))
+                .frame(width: 48)
+            if value != nil {
+                Button("Clear") {
+                    value = nil
+                }
+                .buttonStyle(.link)
+            }
+            Text("Letter or number")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var textBinding: Binding<String> {
+        Binding(
+            get: { value?.uppercased() ?? "" },
+            set: { newValue in
+                value = SnapZone.normalizedShortcutKey(String(newValue.suffix(1)))
+            }
+        )
     }
 }
 

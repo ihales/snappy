@@ -6,7 +6,19 @@ struct ZoneListView: View {
 
     var body: some View {
         List(zoneStore.zones, selection: $selection) { zone in
-            Label(zone.name, systemImage: "scope")
+            HStack(spacing: 8) {
+                Label(zone.name, systemImage: "scope")
+                Spacer()
+                if let key = zone.shortcutKey {
+                    Text(key.uppercased())
+                        .font(.caption.monospaced().weight(.semibold))
+                        .frame(minWidth: 18, minHeight: 18)
+                        .background(.quaternary, in: RoundedRectangle(cornerRadius: 4))
+                        .foregroundStyle(
+                            zoneStore.hasShortcutConflict(for: zone.id) ? .orange : .secondary
+                        )
+                }
+            }
                 .tag(zone.id)
                 .contextMenu {
                     Button("Duplicate") {

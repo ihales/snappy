@@ -10,9 +10,14 @@ enum SnapZoneSelfTests {
         testTargetFrameUsesTopLeftPercentages()
         testTargetFrameOnSmallDisplay()
         testDisplayWidthConditionsTreatZeroAsUnbounded()
+        testDisplayWidthShortcutConflictRanges()
         testNormalizationKeepsDestinationInsideDisplay()
         testFrameIsRepositionedInsideSmallDisplay()
+        testFrameMapsProportionallyBetweenDisplays()
         testClosestOverlappingHotspotWins()
+        testShortcutKeysNormalizeAndDecodeFromOlderData()
+        testShortcutModeStateMachine()
+        testDirectionalScreenSelection()
         print("SnapZoneSelfTests: all checks passed")
     }
 
@@ -150,6 +155,20 @@ enum SnapZoneSelfTests {
         expect(!restricted.isAvailable(forDisplayWidth: 1801))
     }
 
+    private static func testDisplayWidthShortcutConflictRanges() {
+        var compact = SnapZone.defaults[0]
+        compact.minimumDisplayWidth = 0
+        compact.maximumDisplayWidth = 1199
+
+        var wide = SnapZone.defaults[1]
+        wide.minimumDisplayWidth = 1200
+        wide.maximumDisplayWidth = 0
+
+        expect(!compact.displayWidthAvailabilityOverlaps(with: wide))
+        wide.minimumDisplayWidth = 1199
+        expect(compact.displayWidthAvailabilityOverlaps(with: wide))
+    }
+
     private static func testNormalizationKeepsDestinationInsideDisplay() {
         let zone = SnapZone(
             name: "Clamped",
@@ -193,6 +212,72 @@ enum SnapZoneSelfTests {
         expect(correctedLeft.minX, equals: 100)
         expect(correctedLeft.minY, equals: 50)
         expect(WindowFrameGeometry.isInside(correctedLeft, bounds: bounds))
+    }
+
+    private static func testFrameMapsProportionallyBetweenDisplays() {
+        let mapped = WindowFrameGeometry.mappedProportionally(
+            CGRect(x: 500, y: 250, width: 1000, height: 500),
+            from: CGRect(x: 0, y: 0, width: 2000, height: 1000),
+            to: CGRect(x: 100, y: 50, width: 1000, height: 800)
+        )
+
+        expect(mapped.minX, equals: 350)
+        expect(mapped.minY, equals: 250)
+        expect(mapped.width, equals: 500)
+        expect(mapped.height, equals: 400)
+    }
+
+    private static func testShortcutKeysNormalizeAndDecodeFromOlderData() {
+        expect(SnapZone.normalizedShortcutKey("G") == "g")
+        expect(SnapZone.normalizedShortcutKey("12") == "2")
+        expect(SnapZone.normalizedShortcutKey("!") == nil)
+
+        let legacyJSON = """
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "name": "Legacy",
+          "triggerX": 0,
+          "triggerY": 50,
+          "targetX": 0,
+          "targetY": 0,
+          "targetWidth": 50,
+          "targetHeight": 100,
+          "minimumDisplayWidth": 0,
+          "maximumDisplayWidth": 0
+        }
+        """
+        let decoded = try? JSONDecoder().decode(SnapZone.self, from: Data(legacyJSON.utf8))
+        expect(decoded?.name == "Legacy")
+        expect(decoded?.shortcutKey == nil)
+    }
+
+    private static func testShortcutModeStateMachine() {
+        var mode = ShortcutModeState()
+        expect(!mode.handle(.zoneKey("1")))
+        expect(mode.handle(.activate))
+        expect(mode.isArmed)
+        expect(mode.handle(.move(.right)))
+        expect(mode.isArmed)
+        expect(mode.handle(.zoneKey("1")))
+        expect(!mode.isArmed)
+
+        expect(mode.handle(.activate))
+        expect(mode.handle(.cancel))
+        expect(!mode.isArmed)
+    }
+
+    private static func testDirectionalScreenSelection() {
+        let frames = [
+            CGRect(x: 0, y: 0, width: 1000, height: 800),
+            CGRect(x: 1000, y: 100, width: 800, height: 600),
+            CGRect(x: 0, y: 800, width: 1000, height: 700),
+            CGRect(x: 1900, y: 900, width: 700, height: 500)
+        ]
+
+        expect(ScreenLayoutGeometry.neighborIndex(from: 0, direction: .right, frames: frames) == 1)
+        expect(ScreenLayoutGeometry.neighborIndex(from: 0, direction: .up, frames: frames) == 2)
+        expect(ScreenLayoutGeometry.neighborIndex(from: 0, direction: .left, frames: frames) == nil)
+        expect(ScreenLayoutGeometry.neighborIndex(from: 2, direction: .down, frames: frames) == 0)
     }
 
     private static func testClosestOverlappingHotspotWins() {

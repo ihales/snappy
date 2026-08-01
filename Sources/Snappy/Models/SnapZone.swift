@@ -31,6 +31,9 @@ struct SnapZone: Identifiable, Codable, Hashable {
     var minimumDisplayWidth: Double
     var maximumDisplayWidth: Double
 
+    /// A single letter or number used while Snappy's leader mode is active.
+    var shortcutKey: String?
+
     init(
         id: UUID = UUID(),
         name: String,
@@ -41,7 +44,8 @@ struct SnapZone: Identifiable, Codable, Hashable {
         targetWidth: Double,
         targetHeight: Double,
         minimumDisplayWidth: Double = 0,
-        maximumDisplayWidth: Double = 0
+        maximumDisplayWidth: Double = 0,
+        shortcutKey: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -53,6 +57,7 @@ struct SnapZone: Identifiable, Codable, Hashable {
         self.targetHeight = targetHeight
         self.minimumDisplayWidth = minimumDisplayWidth
         self.maximumDisplayWidth = maximumDisplayWidth
+        self.shortcutKey = shortcutKey
         normalize()
     }
 
@@ -122,12 +127,32 @@ struct SnapZone: Identifiable, Codable, Hashable {
         targetHeight = min(targetHeight, 100 - targetY)
         minimumDisplayWidth = max(0, minimumDisplayWidth)
         maximumDisplayWidth = max(0, maximumDisplayWidth)
+        shortcutKey = Self.normalizedShortcutKey(shortcutKey)
+    }
+
+    static func normalizedShortcutKey(_ rawValue: String?) -> String? {
+        guard let rawValue else { return nil }
+        let allowedScalars = rawValue.lowercased().unicodeScalars.filter { scalar in
+            ("a"..."z").contains(Character(String(scalar)))
+                || ("0"..."9").contains(Character(String(scalar)))
+        }
+        guard let scalar = allowedScalars.last else { return nil }
+        return String(scalar)
     }
 
     func isAvailable(forDisplayWidth width: Double) -> Bool {
         let isAboveMinimum = minimumDisplayWidth == 0 || width >= minimumDisplayWidth
         let isBelowMaximum = maximumDisplayWidth == 0 || width <= maximumDisplayWidth
         return isAboveMinimum && isBelowMaximum
+    }
+
+    func displayWidthAvailabilityOverlaps(with other: SnapZone) -> Bool {
+        let lowerBound = max(minimumDisplayWidth, other.minimumDisplayWidth)
+        let upperBound = min(
+            maximumDisplayWidth == 0 ? .infinity : maximumDisplayWidth,
+            other.maximumDisplayWidth == 0 ? .infinity : other.maximumDisplayWidth
+        )
+        return lowerBound <= upperBound
     }
 
     func triggerPoint(in displayFrame: CGRect) -> CGPoint {
@@ -249,7 +274,8 @@ struct SnapZone: Identifiable, Codable, Hashable {
             targetX: 0,
             targetY: 0,
             targetWidth: 50,
-            targetHeight: 100
+            targetHeight: 100,
+            shortcutKey: "1"
         ),
         SnapZone(
             name: "Maximize",
@@ -258,7 +284,8 @@ struct SnapZone: Identifiable, Codable, Hashable {
             targetX: 0,
             targetY: 0,
             targetWidth: 100,
-            targetHeight: 100
+            targetHeight: 100,
+            shortcutKey: "2"
         ),
         SnapZone(
             name: "Right Half",
@@ -267,7 +294,8 @@ struct SnapZone: Identifiable, Codable, Hashable {
             targetX: 50,
             targetY: 0,
             targetWidth: 50,
-            targetHeight: 100
+            targetHeight: 100,
+            shortcutKey: "3"
         )
     ]
 

@@ -11,6 +11,33 @@ enum WindowFrameApplicationResult {
 struct AccessibleWindow {
     let element: AXUIElement
 
+    static func focused() -> AccessibleWindow? {
+        guard
+            let application = NSWorkspace.shared.frontmostApplication,
+            application.processIdentifier != ProcessInfo.processInfo.processIdentifier
+        else {
+            return nil
+        }
+
+        let applicationElement = AXUIElementCreateApplication(application.processIdentifier)
+        var value: CFTypeRef?
+        guard
+            AXUIElementCopyAttributeValue(
+                applicationElement,
+                kAXFocusedWindowAttribute as CFString,
+                &value
+            ) == .success,
+            let value,
+            CFGetTypeID(value) == AXUIElementGetTypeID()
+        else {
+            return nil
+        }
+
+        let window = AccessibleWindow(element: unsafeBitCast(value, to: AXUIElement.self))
+        guard window.belongsToAnotherProcess, window.canMoveAndResize else { return nil }
+        return window
+    }
+
     static func at(appKitPoint point: CGPoint) -> AccessibleWindow? {
         let axPoint = ScreenCoordinates.accessibilityPoint(fromAppKit: point)
         let systemWide = AXUIElementCreateSystemWide()
@@ -65,6 +92,10 @@ struct AccessibleWindow {
         }
 
         return CGRect(origin: position, size: size)
+    }
+
+    var appKitFrame: CGRect? {
+        frame.map(ScreenCoordinates.appKitRect(fromAccessibility:))
     }
 
     @discardableResult

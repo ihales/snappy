@@ -46,7 +46,7 @@ cat >"$INFO_PLIST" <<PLIST
   <key>LSMinimumSystemVersion</key>
   <string>$MIN_SYSTEM_VERSION</string>
   <key>NSAccessibilityUsageDescription</key>
-  <string>Snappy uses Accessibility to move and resize windows you drag to a configured hotspot.</string>
+  <string>Snappy uses Accessibility to move and resize windows using configured hotspots and keyboard shortcuts.</string>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
 </dict>

@@ -7,6 +7,7 @@ final class ZoneStore: ObservableObject {
 
     private let defaults: UserDefaults
     private let storageKey = "snapZones"
+    private let shortcutMigrationKey = "zoneShortcutKeysMigratedV1"
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -16,10 +17,16 @@ final class ZoneStore: ObservableObject {
             let decoded = try? JSONDecoder().decode([SnapZone].self, from: data),
             !decoded.isEmpty
         {
-            zones = decoded
+            zones = decoded.map { zone in
+                var normalized = zone
+                normalized.normalize()
+                return normalized
+            }
         } else {
             zones = SnapZone.defaults
         }
+
+        migrateShortcutKeysIfNeeded()
     }
 
     func zone(withID id: SnapZone.ID) -> SnapZone? {
@@ -38,6 +45,7 @@ final class ZoneStore: ObservableObject {
         guard var copy = zone(withID: id) else { return nil }
         copy.id = UUID()
         copy.name = uniqueName(startingWith: "\(copy.name) Copy")
+        copy.shortcutKey = nil
         zones.append(copy)
         persist()
         return copy.id
@@ -61,6 +69,30 @@ final class ZoneStore: ObservableObject {
         persist()
     }
 
+    func hasShortcutConflict(for id: SnapZone.ID) -> Bool {
+        guard
+            let zone = zone(withID: id),
+            let key = zone.shortcutKey
+        else {
+            return false
+        }
+        return zones.contains {
+            $0.id != id
+                && $0.shortcutKey == key
+                && $0.displayWidthAvailabilityOverlaps(with: zone)
+        }
+    }
+
+    func zones(
+        matchingShortcutKey key: String,
+        forDisplayWidth width: Double
+    ) -> [SnapZone] {
+        guard let key = SnapZone.normalizedShortcutKey(key) else { return [] }
+        return zones.filter {
+            $0.shortcutKey == key && $0.isAvailable(forDisplayWidth: width)
+        }
+    }
+
     private func uniqueName(startingWith candidate: String) -> String {
         guard zones.contains(where: { $0.name == candidate }) else { return candidate }
 
@@ -69,6 +101,24 @@ final class ZoneStore: ObservableObject {
             suffix += 1
         }
         return "\(candidate) \(suffix)"
+    }
+
+    private func migrateShortcutKeysIfNeeded() {
+        guard !defaults.bool(forKey: shortcutMigrationKey) else { return }
+
+        let digits = (1...9).map { String($0) }
+        let letters = "abcdefghijklmnopqrstuvwxyz".map { String($0) }
+        let candidates = digits + letters + ["0"]
+        var usedKeys = Set(zones.compactMap(\.shortcutKey))
+
+        for index in zones.indices where zones[index].shortcutKey == nil {
+            guard let key = candidates.first(where: { !usedKeys.contains($0) }) else { break }
+            zones[index].shortcutKey = key
+            usedKeys.insert(key)
+        }
+
+        defaults.set(true, forKey: shortcutMigrationKey)
+        persist()
     }
 
     private func persist() {

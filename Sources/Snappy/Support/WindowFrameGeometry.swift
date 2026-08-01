@@ -1,6 +1,25 @@
 import CoreGraphics
 
 enum WindowFrameGeometry {
+    static func mappedProportionally(
+        _ frame: CGRect,
+        from sourceBounds: CGRect,
+        to destinationBounds: CGRect
+    ) -> CGRect {
+        guard sourceBounds.width > 0, sourceBounds.height > 0 else {
+            return frame
+        }
+
+        return CGRect(
+            x: destinationBounds.minX
+                + (frame.minX - sourceBounds.minX) / sourceBounds.width * destinationBounds.width,
+            y: destinationBounds.minY
+                + (frame.minY - sourceBounds.minY) / sourceBounds.height * destinationBounds.height,
+            width: frame.width / sourceBounds.width * destinationBounds.width,
+            height: frame.height / sourceBounds.height * destinationBounds.height
+        )
+    }
+
     /// Repositions a frame so it remains inside the supplied bounds whenever its size allows it.
     static func repositionedInside(_ frame: CGRect, bounds: CGRect) -> CGRect {
         var result = frame

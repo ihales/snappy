@@ -29,6 +29,19 @@ struct GeneralSettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            Section("Keyboard") {
+                HStack {
+                    Text("Activate Snappy mode")
+                    Spacer()
+                    Text("⌃⌥E")
+                        .font(.body.monospaced().weight(.semibold))
+                }
+
+                Text("Press a hotspot’s assigned letter or number to snap the focused window. Arrow keys move it between displays; Escape cancels.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Section("Permissions") {
                 HStack {
                     Label(
@@ -49,6 +62,6 @@ struct GeneralSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 520, height: 340)
+        .frame(width: 540, height: 440)
     }
 }

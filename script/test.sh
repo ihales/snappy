@@ -7,6 +7,8 @@ trap 'rm -rf "$TEST_TEMP_DIR"' EXIT
 
 xcrun swiftc \
   "$ROOT_DIR/Sources/Snappy/Models/SnapZone.swift" \
+  "$ROOT_DIR/Sources/Snappy/Support/ShortcutMode.swift" \
+  "$ROOT_DIR/Sources/Snappy/Support/ScreenLayoutGeometry.swift" \
   "$ROOT_DIR/Sources/Snappy/Support/HotspotMatcher.swift" \
   "$ROOT_DIR/Sources/Snappy/Support/WindowFrameGeometry.swift" \
   "$ROOT_DIR/Tests/SnappyCoreTests/SnapZoneSelfTests.swift" \

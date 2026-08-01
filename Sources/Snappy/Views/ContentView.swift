@@ -21,7 +21,8 @@ struct ContentView: View {
                         zone: Binding(
                             get: { zoneStore.zone(withID: selection) ?? zone },
                             set: { zoneStore.replace($0) }
-                        )
+                        ),
+                        shortcutHasConflict: zoneStore.hasShortcutConflict(for: selection)
                     )
                 } else {
                     ContentUnavailableView(
