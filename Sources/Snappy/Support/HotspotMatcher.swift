@@ -16,7 +16,7 @@ enum HotspotMatcher {
                 depth: activationDepth,
                 lengthPercent: lengthPercent
             )
-            guard activationFrames.contains(where: { $0.contains(point) }) else {
+            guard activationFrames.contains(where: { $0.containsIncludingBoundary(point) }) else {
                 continue
             }
 
@@ -29,5 +29,15 @@ enum HotspotMatcher {
             }
         }
         return closest?.zone
+    }
+}
+
+private extension CGRect {
+    func containsIncludingBoundary(_ point: CGPoint) -> Bool {
+        let rect = standardized
+        return point.x >= rect.minX
+            && point.x <= rect.maxX
+            && point.y >= rect.minY
+            && point.y <= rect.maxY
     }
 }

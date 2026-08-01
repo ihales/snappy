@@ -8,6 +8,7 @@ enum SnapZoneSelfTests {
         testTriggerPointPinsToNearestEdge()
         testActivationFrameUsesFixedDepthAndGlobalLength()
         testActivationZoneWrapsAroundCorner()
+        testExactOuterDisplayEdgesActivateZones()
         testTargetFrameUsesTopLeftPercentages()
         testTargetFrameOnSmallDisplay()
         testDisplayWidthConditionsTreatZeroAsUnbounded()
@@ -117,6 +118,28 @@ enum SnapZoneSelfTests {
         )
         expect(fromLeftLeg?.id == zone.id)
         expect(fromTopLeg?.id == zone.id)
+    }
+
+    private static func testExactOuterDisplayEdgesActivateZones() {
+        let display = CGRect(x: 100, y: 200, width: 1000, height: 500)
+        let top = SnapZone.defaults[1]
+        let right = SnapZone.defaults[2]
+
+        let atTopEdge = HotspotMatcher.closestZone(
+            to: CGPoint(x: display.midX, y: display.maxY),
+            in: display,
+            zones: [top],
+            lengthPercent: 30
+        )
+        let atRightEdge = HotspotMatcher.closestZone(
+            to: CGPoint(x: display.maxX, y: display.midY),
+            in: display,
+            zones: [right],
+            lengthPercent: 30
+        )
+
+        expect(atTopEdge?.id == top.id)
+        expect(atRightEdge?.id == right.id)
     }
 
     private static func testTargetFrameUsesTopLeftPercentages() {
