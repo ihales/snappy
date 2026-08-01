@@ -2,6 +2,7 @@ import CoreGraphics
 import Foundation
 
 @main
+@MainActor
 enum SnapZoneSelfTests {
     static func main() {
         testTriggerPointPinsToNearestEdge()
@@ -18,6 +19,9 @@ enum SnapZoneSelfTests {
         testShortcutKeysNormalizeAndDecodeFromOlderData()
         testShortcutModeStateMachine()
         testDirectionalScreenSelection()
+        testNewZonesHaveIndependentIdentifiers()
+        testDuplicateZoneIdentifiersAreRepaired()
+        testZoneStoreAddsEditsAndRemovesIndependentZones()
         print("SnapZoneSelfTests: all checks passed")
     }
 
@@ -278,6 +282,54 @@ enum SnapZoneSelfTests {
         expect(ScreenLayoutGeometry.neighborIndex(from: 0, direction: .up, frames: frames) == 2)
         expect(ScreenLayoutGeometry.neighborIndex(from: 0, direction: .left, frames: frames) == nil)
         expect(ScreenLayoutGeometry.neighborIndex(from: 2, direction: .down, frames: frames) == 0)
+    }
+
+    private static func testNewZonesHaveIndependentIdentifiers() {
+        let first = SnapZone.newZone
+        let second = SnapZone.newZone
+
+        expect(first.id != second.id)
+    }
+
+    private static func testDuplicateZoneIdentifiersAreRepaired() {
+        let first = SnapZone.newZone
+        var duplicate = SnapZone.newZone
+        duplicate.id = first.id
+
+        let repaired = SnapZone.repairingDuplicateIdentifiers(in: [first, duplicate])
+
+        expect(repaired.count == 2)
+        expect(repaired[0].id == first.id)
+        expect(repaired[1].id != first.id)
+        expect(Set(repaired.map(\.id)).count == repaired.count)
+    }
+
+    private static func testZoneStoreAddsEditsAndRemovesIndependentZones() {
+        let suiteName = "com.isaac.snappy.tests.\(UUID().uuidString)"
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            expect(false)
+            return
+        }
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = ZoneStore(defaults: defaults)
+        let firstID = store.add()
+        let secondID = store.add()
+        expect(firstID != secondID)
+
+        guard var first = store.zone(withID: firstID) else {
+            expect(false)
+            return
+        }
+        first.name = "Edited independently"
+        store.replace(first)
+
+        expect(store.zone(withID: firstID)?.name == "Edited independently")
+        expect(store.zone(withID: secondID)?.name != "Edited independently")
+
+        store.remove(id: firstID)
+        expect(store.zone(withID: firstID) == nil)
+        expect(store.zone(withID: secondID) != nil)
     }
 
     private static func testClosestOverlappingHotspotWins() {

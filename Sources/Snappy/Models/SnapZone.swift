@@ -299,15 +299,30 @@ struct SnapZone: Identifiable, Codable, Hashable {
         )
     ]
 
-    static let newZone = SnapZone(
-        name: "New Hotspot",
-        triggerX: 50,
-        triggerY: 0,
-        targetX: 25,
-        targetY: 25,
-        targetWidth: 50,
-        targetHeight: 50
-    )
+    static var newZone: SnapZone {
+        SnapZone(
+            name: "New Hotspot",
+            triggerX: 50,
+            triggerY: 0,
+            targetX: 25,
+            targetY: 25,
+            targetWidth: 50,
+            targetHeight: 50
+        )
+    }
+
+    static func repairingDuplicateIdentifiers(in zones: [SnapZone]) -> [SnapZone] {
+        var usedIdentifiers: Set<UUID> = []
+
+        return zones.map { zone in
+            var repaired = zone
+            while usedIdentifiers.contains(repaired.id) {
+                repaired.id = UUID()
+            }
+            usedIdentifiers.insert(repaired.id)
+            return repaired
+        }
+    }
 }
 
 private extension Double {

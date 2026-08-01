@@ -17,10 +17,15 @@ final class ZoneStore: ObservableObject {
             let decoded = try? JSONDecoder().decode([SnapZone].self, from: data),
             !decoded.isEmpty
         {
-            zones = decoded.map { zone in
+            let normalized = decoded.map { zone in
                 var normalized = zone
                 normalized.normalize()
                 return normalized
+            }
+            zones = SnapZone.repairingDuplicateIdentifiers(in: normalized)
+
+            if zones.map(\.id) != normalized.map(\.id) {
+                persist()
             }
         } else {
             zones = SnapZone.defaults
