@@ -1,7 +1,9 @@
+import AppKit
 import SwiftUI
 
 struct GeneralSettingsView: View {
     @ObservedObject var snapEngine: SnapEngine
+    @ObservedObject var loginItemManager: LoginItemManager
     @AppStorage("snappingEnabled") private var snappingEnabled = true
     @AppStorage("showMenuBarIcon") private var showMenuBarIcon = true
     @AppStorage("hotspotLengthPercent") private var hotspotLength = 30.0
@@ -11,6 +13,40 @@ struct GeneralSettingsView: View {
             Section("General") {
                 Toggle("Enable window snapping", isOn: $snappingEnabled)
                 Toggle("Show menu bar icon", isOn: $showMenuBarIcon)
+                Toggle("Start Snappy at login", isOn: startAtLoginBinding)
+                    .disabled(loginItemManager.statusUnavailable)
+
+                if loginItemManager.requiresApproval {
+                    HStack {
+                        Label(
+                            "Allow Snappy in System Settings to finish enabling startup.",
+                            systemImage: "exclamationmark.triangle.fill"
+                        )
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                        Spacer()
+                        Button("Open Login Items") {
+                            loginItemManager.openLoginItemsSettings()
+                        }
+                    }
+                } else if loginItemManager.statusUnavailable {
+                    Label(
+                        "Start at login is unavailable from this copy of Snappy.",
+                        systemImage: "exclamationmark.triangle.fill"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                } else if let error = loginItemManager.lastError {
+                    HStack {
+                        Label(error, systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                        Spacer()
+                        Button("Open Login Items") {
+                            loginItemManager.openLoginItemsSettings()
+                        }
+                    }
+                }
             }
 
             Section("Drop zones") {
@@ -62,6 +98,19 @@ struct GeneralSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 540, height: 440)
+        .frame(width: 560, height: 500)
+        .onAppear {
+            loginItemManager.refresh()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            loginItemManager.refresh()
+        }
+    }
+
+    private var startAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { loginItemManager.isRegistered },
+            set: { loginItemManager.setRegistered($0) }
+        )
     }
 }

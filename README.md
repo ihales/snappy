@@ -54,4 +54,6 @@ size changes. Use **Grant Access** in the app, then enable Snappy in **System
 Settings → Privacy & Security → Accessibility**.
 
 The menu bar icon is optional. Turn it off in Snappy Settings; the regular Dock
-app remains available.
+app remains available. Snappy can also register itself as a macOS login item
+using **Start Snappy at login** in Settings. If macOS requires approval, Snappy
+links directly to **System Settings → General → Login Items**.

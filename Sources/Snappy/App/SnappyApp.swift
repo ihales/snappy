@@ -67,7 +67,10 @@ struct SnappyApp: App {
         }
 
         Settings {
-            GeneralSettingsView(snapEngine: model.snapEngine)
+            GeneralSettingsView(
+                snapEngine: model.snapEngine,
+                loginItemManager: model.loginItemManager
+            )
         }
 
         .commands {
