@@ -41,7 +41,8 @@ until the conflict is resolved.
 
 The script builds a SwiftPM executable, stages `dist/Snappy.app`, and opens the
 app as a normal macOS application. `--verify`, `--debug`, `--logs`, and
-`--telemetry` modes are also available.
+`--telemetry` modes are also available. Use `--release` to stage a signed
+production build without launching it.
 
 Run the framework-free model checks with:
 
