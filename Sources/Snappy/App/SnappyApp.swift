@@ -2,9 +2,33 @@ import AppKit
 import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    private let windowLifecycleNotifications: [Notification.Name] = [
+        NSWindow.didBecomeKeyNotification,
+        NSWindow.didResignKeyNotification,
+        NSWindow.willCloseNotification,
+        NSWindow.didMiniaturizeNotification,
+        NSWindow.didDeminiaturizeNotification,
+    ]
+
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        NSApp.setActivationPolicy(.accessory)
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
+        for name in windowLifecycleNotifications {
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(windowStateDidChange),
+                name: name,
+                object: nil
+            )
+        }
+
+        scheduleActivationPolicyUpdate(activateVisibleWindows: true)
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -15,10 +39,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         _ sender: NSApplication,
         hasVisibleWindows flag: Bool
     ) -> Bool {
+        sender.setActivationPolicy(.regular)
         if !flag, let window = sender.windows.first(where: { $0.canBecomeMain }) {
             window.makeKeyAndOrderFront(nil)
         }
+        sender.activate(ignoringOtherApps: true)
+        scheduleActivationPolicyUpdate()
         return true
+    }
+
+    @objc private func windowStateDidChange(_ notification: Notification) {
+        scheduleActivationPolicyUpdate()
+    }
+
+    private func scheduleActivationPolicyUpdate(activateVisibleWindows: Bool = false) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+
+            let hasVisibleConfigurationWindow = self.hasVisibleConfigurationWindow
+
+            NSApp.setActivationPolicy(hasVisibleConfigurationWindow ? .regular : .accessory)
+
+            if activateVisibleWindows, hasVisibleConfigurationWindow {
+                NSApp.activate(ignoringOtherApps: true)
+            }
+        }
+    }
+
+    private var hasVisibleConfigurationWindow: Bool {
+        NSApp.windows.contains { window in
+            window.isVisible
+                && !window.isMiniaturized
+                && window.canBecomeMain
+                && !(window is NSPanel)
+        }
     }
 }
 

@@ -33,6 +33,7 @@ struct MenuBarContent: View {
     }
 
     private func showMainWindow() {
+        NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         if let window = NSApp.windows.first(where: { $0.title == "Snappy" }) {
             window.makeKeyAndOrderFront(nil)
