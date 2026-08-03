@@ -52,7 +52,7 @@ struct ZoneEditorView: View {
                     if shortcutHasConflict {
                         GridRow {
                             Color.clear.frame(width: 230, height: 1)
-                            Label("This key is also assigned to another hotspot.", systemImage: "exclamationmark.triangle.fill")
+                            Label("This key is also assigned to a hotspot with an overlapping display-width range.", systemImage: "exclamationmark.triangle.fill")
                                 .font(.caption)
                                 .foregroundStyle(.orange)
                         }
@@ -83,7 +83,7 @@ struct ZoneEditorView: View {
                     Divider().gridCellColumns(2)
 
                     GridRow {
-                        SectionLabel(title: "Display widths", subtitle: "Use 0 for no limit; values are logical points")
+                        SectionLabel(title: "Display widths", subtitle: "Min is inclusive; Max is exclusive; use 0 for no limit")
                         HStack(spacing: 14) {
                             NumberField(label: "Min", value: $zone.minimumDisplayWidth, suffix: "pt")
                             NumberField(label: "Max", value: $zone.maximumDisplayWidth, suffix: "pt")

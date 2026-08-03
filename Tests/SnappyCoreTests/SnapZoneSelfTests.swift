@@ -13,6 +13,7 @@ enum SnapZoneSelfTests {
         testTargetFrameOnSmallDisplay()
         testDisplayWidthConditionsTreatZeroAsUnbounded()
         testDisplayWidthShortcutConflictRanges()
+        testShortcutConflictRequiresOverlappingDisplayWidths()
         testNormalizationKeepsDestinationInsideDisplay()
         testFrameIsRepositionedInsideSmallDisplay()
         testFrameMapsProportionallyBetweenDisplays()
@@ -178,14 +179,14 @@ enum SnapZoneSelfTests {
         )
         expect(!restricted.isAvailable(forDisplayWidth: 1199))
         expect(restricted.isAvailable(forDisplayWidth: 1200))
-        expect(restricted.isAvailable(forDisplayWidth: 1800))
-        expect(!restricted.isAvailable(forDisplayWidth: 1801))
+        expect(restricted.isAvailable(forDisplayWidth: 1799))
+        expect(!restricted.isAvailable(forDisplayWidth: 1800))
     }
 
     private static func testDisplayWidthShortcutConflictRanges() {
         var compact = SnapZone.defaults[0]
         compact.minimumDisplayWidth = 0
-        compact.maximumDisplayWidth = 1199
+        compact.maximumDisplayWidth = 1200
 
         var wide = SnapZone.defaults[1]
         wide.minimumDisplayWidth = 1200
@@ -194,6 +195,38 @@ enum SnapZoneSelfTests {
         expect(!compact.displayWidthAvailabilityOverlaps(with: wide))
         wide.minimumDisplayWidth = 1199
         expect(compact.displayWidthAvailabilityOverlaps(with: wide))
+    }
+
+    private static func testShortcutConflictRequiresOverlappingDisplayWidths() {
+        let suiteName = "com.isaac.snappy.tests.\(UUID().uuidString)"
+        guard let defaults = UserDefaults(suiteName: suiteName) else {
+            expect(false)
+            return
+        }
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let store = ZoneStore(defaults: defaults)
+        var compact = store.zones[0]
+        var wide = store.zones[1]
+        compact.shortcutKey = "g"
+        compact.minimumDisplayWidth = 0
+        compact.maximumDisplayWidth = 1200
+        wide.shortcutKey = "g"
+        wide.minimumDisplayWidth = 1200
+        wide.maximumDisplayWidth = 0
+        store.replace(compact)
+        store.replace(wide)
+
+        expect(!store.hasShortcutConflict(for: compact.id))
+        expect(!store.hasShortcutConflict(for: wide.id))
+        expect(store.zones(matchingShortcutKey: "g", forDisplayWidth: 1199).map(\.id) == [compact.id])
+        expect(store.zones(matchingShortcutKey: "g", forDisplayWidth: 1200).map(\.id) == [wide.id])
+
+        wide.minimumDisplayWidth = 1199
+        store.replace(wide)
+
+        expect(store.hasShortcutConflict(for: compact.id))
+        expect(store.hasShortcutConflict(for: wide.id))
     }
 
     private static func testNormalizationKeepsDestinationInsideDisplay() {

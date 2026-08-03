@@ -142,7 +142,7 @@ struct SnapZone: Identifiable, Codable, Hashable {
 
     func isAvailable(forDisplayWidth width: Double) -> Bool {
         let isAboveMinimum = minimumDisplayWidth == 0 || width >= minimumDisplayWidth
-        let isBelowMaximum = maximumDisplayWidth == 0 || width <= maximumDisplayWidth
+        let isBelowMaximum = maximumDisplayWidth == 0 || width < maximumDisplayWidth
         return isAboveMinimum && isBelowMaximum
     }
 
@@ -152,7 +152,7 @@ struct SnapZone: Identifiable, Codable, Hashable {
             maximumDisplayWidth == 0 ? .infinity : maximumDisplayWidth,
             other.maximumDisplayWidth == 0 ? .infinity : other.maximumDisplayWidth
         )
-        return lowerBound <= upperBound
+        return lowerBound < upperBound
     }
 
     func triggerPoint(in displayFrame: CGRect) -> CGPoint {

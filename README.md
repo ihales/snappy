@@ -8,7 +8,8 @@ Each hotspot controls:
 
 - its X/Y trigger position as a percentage of the display;
 - the destination X/Y/width/height as percentages of the usable display area;
-- optional minimum and maximum display widths, in macOS logical points.
+- optional minimum-inclusive and maximum-exclusive display widths, in macOS
+  logical points.
 
 Drop zones are fixed-depth strips along display edges. One app-wide edge-length
 setting controls how tall side zones are and how wide top or bottom zones are.
@@ -30,8 +31,10 @@ keeping Snappy mode open, or press Escape to cancel. The mode also closes after
 three seconds of inactivity.
 
 The default hotspots use `1`, `2`, and `3`. Each key can be changed or cleared
-in the hotspot editor; duplicate assignments are highlighted and will not run
-until the conflict is resolved.
+in the hotspot editor. Duplicate assignments are only conflicts when their
+display-width ranges overlap. Minimum widths are inclusive and maximum widths
+are exclusive, so ranges ending and beginning at the same width are adjacent,
+not overlapping.
 
 ## Run
 
@@ -54,7 +57,8 @@ Snappy needs Accessibility access because macOS protects window position and
 size changes. Use **Grant Access** in the app, then enable Snappy in **System
 Settings → Privacy & Security → Accessibility**.
 
-The menu bar icon is optional. Turn it off in Snappy Settings; the regular Dock
-app remains available. Snappy can also register itself as a macOS login item
-using **Start Snappy at login** in Settings. If macOS requires approval, Snappy
-links directly to **System Settings → General → Login Items**.
+The menu bar icon is optional. Turn it off in Snappy Settings; the Dock icon is
+shown while the editor or Settings is visible and hidden while Snappy runs in
+the background. Snappy can also register itself as a macOS login item using
+**Start Snappy at login** in Settings. If macOS requires approval, Snappy links
+directly to **System Settings → General → Login Items**.
